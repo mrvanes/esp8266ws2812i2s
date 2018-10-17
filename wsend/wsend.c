@@ -17,13 +17,13 @@ struct sockaddr_in servaddr;
 
 int main( int argc, char ** argv )
 {
-	int firstoverride = -1;
-	uint16_t lights = 186;
+	uint16_t lights = 1;
 	uint8_t pattern = 0;
 	unsigned ws_sleep = WS_SLEEP;
+    int broadcast = -1;
 	if( argc < 2 )
 	{
-		fprintf( stderr, "Error: usage: %s ip [no. of light=186] [override 1st LED (i.e. white on some systems))=-1] [pattern=-1] [sleep seconds=%g]\n", argv[0], (double)ws_sleep );
+		fprintf( stderr, "Error: usage: %s ip [no. of light=186] [broadcast=-1] [pattern=-1] [sleep seconds=%g]\n", argv[0], (double)ws_sleep );
 		return -1;
 	}
 	uint32_t frame = 0;
@@ -35,28 +35,28 @@ int main( int argc, char ** argv )
 	servaddr.sin_port=htons(COM_PORT);
 
 	if( argc >= 3 ) lights = atoi( argv[2] );
-	if( argc >= 4 ) firstoverride = atoi( argv[3] );
+	if( argc >= 4 ) broadcast = atoi( argv[3] );
 	if( argc >= 5 ) pattern = atoi( argv[4] );
 	if( argc >= 6 ) ws_sleep = atoi( argv[5] );
 
-	printf( "Lights: %d\n", lights );
+	if( broadcast >= 0 )
+            setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof broadcast);
+
+// 	printf( "Lights: %d\n", lights );
 
 	while(1) {
-		uint8_t buffer[lights*3];
+		uint8_t buffer[(lights+1)*3];
 		unsigned i;
-		for( i = 0; i < lights; i++ ) {
+		for( i = 0; i <= lights; i++ ) {
 			uint32_t hex = 0;
 
 			hex = hex_pattern(  pattern, i, lights, frame, NULL );
 
-			buffer[0+i*3] = (hex>>8);
-			buffer[1+i*3] = (hex);
-			buffer[2+i*3] = (hex>>16);
+			buffer[3+i*3] = (hex>>8);
+			buffer[4+i*3] = (hex);
+			buffer[5+i*3] = (hex>>16);
 
 		}
-
-		if( firstoverride >= 0 )
-			buffer[0] = firstoverride;
 
 #ifdef BEAT
 		for( i = 0; i < 4;i ++ )
@@ -81,9 +81,9 @@ int main( int argc, char ** argv )
 		}
 		printf( "\n" );
 		#else
-		putc('.', stdout);
+// 		putc('.', stdout);
 		#endif
-		fflush( stdout );
+// 		fflush( stdout );
 		usleep(ws_sleep);
 	}
 }

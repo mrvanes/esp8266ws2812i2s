@@ -75,12 +75,16 @@ udpserver_recv(void *arg, char *pusrdata, unsigned short len)
 
 	uart0_sendStr("X");
 
-	ws2812_push( pusrdata+3, len-3 );
+// 	ws2812_push( pusrdata+3, len-3 );
+	ws2812_push( pusrdata, len );
 
-	len -= 3;
-	if( len > sizeof(last_leds) + 3 )
-		len = sizeof(last_leds) + 3;
-	ets_memcpy( last_leds, pusrdata+3, len );
+// 	len -= 3;
+// 	if( len > sizeof(last_leds) + 3 )
+// 		len = sizeof(last_leds) + 3;
+	if( len > sizeof(last_leds) )
+		len = sizeof(last_leds);
+// 	ets_memcpy( last_leds, pusrdata+3, len );
+	ets_memcpy( last_leds, pusrdata, len );
 	UsrCfg->nled = len / 3;
 }
 
